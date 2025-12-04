@@ -3,6 +3,8 @@ import SwiftData
 
 @main
 struct MiddagsgastenApp: App {
+    @State private var store = MealStore(PreviewData.meals)
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -18,8 +20,9 @@ struct MiddagsgastenApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(meals: SampleData.meals)
+            ContentView()
         }
+        .environment(store)
         .modelContainer(sharedModelContainer)
     }
 }

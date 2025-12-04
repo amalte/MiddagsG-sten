@@ -1,16 +1,16 @@
 import SwiftUI
 
 struct ContentView: View {
-    let meals: [Meal]
     
     var body: some View {
         NavigationStack {
-            MealsListView(meals: meals)
+            MealsListView()
         }
     }
 }
 
 #Preview {
-    ContentView(meals: SampleData.meals)
+    ContentView()
+        .environment(MealStore(PreviewData.meals))
 }
 

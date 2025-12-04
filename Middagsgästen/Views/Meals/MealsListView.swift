@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct MealsListView: View {
+    @Environment(MealStore.self) private var store
     @State private var searchText = ""
-    let meals: [Meal]
+    @State private var isPresentingAddMealSheet = false
 
     var filteredMeals: [Meal] {
-        searchText.isEmpty ?
-        meals :
-        meals.filter { meal in
+        searchText.isEmpty ? store.meals :
+        store.meals.filter { meal in
             meal.name.localizedCaseInsensitiveContains(searchText) ||
             meal.guest.localizedCaseInsensitiveContains(searchText)
         }
@@ -24,16 +24,24 @@ struct MealsListView: View {
                     )
                 } else {
                     List(filteredMeals) { meal in
-                        VStack(alignment: .leading) {
-                            Text(meal.name).font(.headline)
-                            Text("Gäst: \(meal.guest)").foregroundColor(.secondary)
-                            Text("Datum: \(meal.formattedDate)").foregroundColor(.secondary)
-                        }
+                        MealCardViewItem(meal: meal)
                     }
                 }
             }
             .navigationTitle("Matgästen")
             .searchable(text: $searchText, prompt: "Sök efter maträtt eller gäster")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isPresentingAddMealSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $isPresentingAddMealSheet) {
+                AddMealView()
+            }
             
         }
     }
@@ -41,6 +49,7 @@ struct MealsListView: View {
 
 #Preview {
     NavigationStack {
-        MealsListView(meals: SampleData.meals)
+        MealsListView()
+            .environment(MealStore(PreviewData.meals))
     }
 }
