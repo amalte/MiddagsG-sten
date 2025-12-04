@@ -1,13 +1,15 @@
+import SwiftData
 import SwiftUI
 
 struct MealsListView: View {
-    @Environment(MealStore.self) private var store
     @State private var searchText = ""
     @State private var isPresentingAddMealSheet = false
+    
+    let meals: [Meal]
 
     var filteredMeals: [Meal] {
-        searchText.isEmpty ? store.meals :
-        store.meals.filter { meal in
+        searchText.isEmpty ? meals :
+        meals.filter { meal in
             meal.name.localizedCaseInsensitiveContains(searchText) ||
             meal.guest.localizedCaseInsensitiveContains(searchText)
         }
@@ -40,7 +42,7 @@ struct MealsListView: View {
                 }
             }
             .sheet(isPresented: $isPresentingAddMealSheet) {
-                AddMealView()
+                AddMealView(meals: meals)
             }
             
         }
@@ -49,7 +51,7 @@ struct MealsListView: View {
 
 #Preview {
     NavigationStack {
-        MealsListView()
-            .environment(MealStore(PreviewData.meals))
+        MealsListView(meals: PreviewData.meals)
+            .modelContainer(previewContainer)
     }
 }

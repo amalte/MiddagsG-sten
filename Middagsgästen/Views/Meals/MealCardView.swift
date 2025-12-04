@@ -35,8 +35,8 @@ struct MealCardView: View {
                         showingMeals ? "Dölj" : "Visa",
                         systemImage: showingMeals ? "chevron.up" : "chevron.down"
                     )
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.blue)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.blue)
                 }
             }
             

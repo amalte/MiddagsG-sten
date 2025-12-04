@@ -1,8 +1,10 @@
+import SwiftData
 import SwiftUI
 
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(MealStore.self) private var store
+    @Environment(\.modelContext) var modelContext
+    let meals: [Meal]
     
     @State private var mealName = ""
     @State private var guest = ""
@@ -12,24 +14,24 @@ struct AddMealView: View {
     enum Field { case guest, mealName, date }
     
     var mealNameDuplicates: [Meal] {
-        store.meals.filter {
+        meals.filter {
             $0.name.localizedCaseInsensitiveCompare(self.mealName) == .orderedSame
         }
     }
     
     var guestDuplicates: [Meal] {
-        store.meals.filter {
+        meals.filter {
             $0.guest.localizedCaseInsensitiveCompare(self.guest) == .orderedSame
         }
     }
     
     var guestSuggestions: [String] {
-        let allGuests = store.meals.map { $0.guest }
+        let allGuests = meals.map { $0.guest }
         return allGuests.suggestions(for: guest)
     }
     
     var mealNameSuggestions: [String] {
-        let allNames = store.meals.map { $0.name }
+        let allNames = meals.map { $0.name }
         return allNames.suggestions(for: mealName)
     }
     
@@ -52,6 +54,7 @@ struct AddMealView: View {
                         )
                         .focused($focusedField, equals: .guest)
                         
+                        // "Visa/Dölj" Show the MealCardView.swift view
                         if focusedField != .guest && !guest.isEmpty && !guestDuplicates.isEmpty {
                             MealCardView(meals: guestDuplicates, identifier: MealIdentifier.guest)
                         }
@@ -92,7 +95,7 @@ struct AddMealView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Spara") {
                             let newMeal = Meal(name: mealName, guest: guest, date: date)
-                            store.meals.append(newMeal) // Adds the new meal to the list
+                            modelContext.insert(newMeal) // Adds the new meal to the list
                             dismiss()
                         }
                     }
@@ -105,6 +108,6 @@ struct AddMealView: View {
 }
 
 #Preview {
-    AddMealView()
-        .environment(MealStore(PreviewData.meals))
+    AddMealView(meals: PreviewData.meals)
+        .modelContainer(previewContainer)
 }

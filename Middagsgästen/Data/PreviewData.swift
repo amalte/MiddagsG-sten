@@ -1,13 +1,30 @@
 import Foundation
+import SwiftData
 
 enum PreviewData {
     static let meals: [Meal] = [
-        Meal(name: "Carbonara", guest: "Göran", date: .now),
+        Meal(name: "Carbonara", guest: "Göran", date: Calendar.current.date(byAdding: .day, value: -1, to: .now)!),
         Meal(name: "Pizza", guest: "Göran", date: .now),
-        Meal(name: "Köttbullar", guest: "Göran", date: .now),
-        Meal(name: "Chicken nuggets", guest: "Göran", date: .now),
-        Meal(name: "Köttbullar", guest: "Eriksson", date: .now),
+        Meal(name: "Köttbullar", guest: "Göran", date: Calendar.current.date(byAdding: .day, value: -3, to: .now)!),
+        Meal(name: "Chicken nuggets", guest: "Göran", date: Calendar.current.date(byAdding: .day, value: -5, to: .now)!),
+        Meal(name: "Köttbullar", guest: "Eriksson", date: Calendar.current.date(byAdding: .day, value: -100, to: .now)!),
         Meal(name: "Hamburgare", guest: "Eriksson", date: .now),
-        Meal(name: "Lax i ugn", guest: "Farmor", date: .now)
+        Meal(name: "Lax i ugn", guest: "Farmor", date: Calendar.current.date(byAdding: .day, value: -5, to: .now)!)
     ]
 }
+
+@MainActor
+let previewContainer: ModelContainer = {
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Meal.self, configurations: config)
+        
+        for meal in PreviewData.meals {
+            container.mainContext.insert(meal)
+        }
+        return container
+        
+    } catch {
+        fatalError("Failed to create container.")
+    }
+}()
