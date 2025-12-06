@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+/// Predefined meals data used for testing purposes.
 enum PreviewData {
     static let meals: [Meal] = [
         Meal(name: "Carbonara", guest: "Göran", date: Calendar.current.date(byAdding: .day, value: -1, to: .now)!),

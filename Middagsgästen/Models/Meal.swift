@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+/// A persisted model representing a meal that was cooked for a certain guest, containing the cooking date.
 @Model
 class Meal {
     var id = UUID()

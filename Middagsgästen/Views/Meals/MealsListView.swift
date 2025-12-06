@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+/// Main screen of app, displays a list of all the meals with add, delete and search functionality.
 struct MealsListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [
