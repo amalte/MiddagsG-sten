@@ -2,10 +2,16 @@ import SwiftData
 import SwiftUI
 
 struct MealsListView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: [
+        SortDescriptor(\Meal.date, order: .reverse),
+        SortDescriptor(\Meal.guest)
+    ]) var meals: [Meal]
+    
     @State private var searchText = ""
     @State private var isPresentingAddMealSheet = false
-    
-    let meals: [Meal]
+    @State private var isShowingDeleteConfirmation = false
+    @State private var mealPendingDelete: Meal?
 
     var filteredMeals: [Meal] {
         searchText.isEmpty ? meals :
@@ -18,19 +24,45 @@ struct MealsListView: View {
     var body: some View {
         VStack {
             Group {
-                if filteredMeals.isEmpty {
+                if filteredMeals.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView(
                         "Din sökning matchade inte med någon maträtt eller gäst",
                         systemImage: "magnifyingglass",
                         description: Text("Testa ett annat namn på maträtt eller gästnamn")
                     )
                 } else {
-                    List(filteredMeals) { meal in
-                        MealCardViewItem(meal: meal)
+                    List {
+                        ForEach(filteredMeals) { meal in
+                            MealCardViewItem(meal: meal)
+                            .swipeActions {
+                                Button("", systemImage: "trash") {
+                                    mealPendingDelete = meal
+                                    isShowingDeleteConfirmation = true
+                                }
+                                .tint(.red)
+                            }
+                        }
                     }
+                    .animation(.default, value: filteredMeals)
                 }
             }
-            .navigationTitle("Matgästen")
+            .alert(
+                "Ta bort maträtt?",
+                isPresented: $isShowingDeleteConfirmation
+            ) {
+                Button("Ta bort", role: .destructive) {
+                    if let meal = mealPendingDelete {
+                         withAnimation {
+                             deleteMealConfirmed(meal)
+                         }
+                    }
+                }
+                
+                Button("Avbryt", role: .cancel) {
+                    mealPendingDelete = nil
+                }
+            }
+            .navigationTitle("Middagsgästen")
             .searchable(text: $searchText, prompt: "Sök efter maträtt eller gäster")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -42,16 +74,21 @@ struct MealsListView: View {
                 }
             }
             .sheet(isPresented: $isPresentingAddMealSheet) {
-                AddMealView(meals: meals)
+                AddMealView()
             }
             
         }
+    }
+    
+    private func deleteMealConfirmed(_ meal: Meal) {
+            modelContext.delete(meal)
+        mealPendingDelete = nil
     }
 }
 
 #Preview {
     NavigationStack {
-        MealsListView(meals: PreviewData.meals)
+        MealsListView()
             .modelContainer(previewContainer)
     }
 }

@@ -3,8 +3,9 @@ import SwiftUI
 
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) var modelContext
-    let meals: [Meal]
+    @Environment(\.modelContext) private var modelContext
+    
+    @Query private var meals: [Meal]
     
     @State private var mealName = ""
     @State private var guest = ""
@@ -108,6 +109,6 @@ struct AddMealView: View {
 }
 
 #Preview {
-    AddMealView(meals: PreviewData.meals)
+    AddMealView()
         .modelContainer(previewContainer)
 }
