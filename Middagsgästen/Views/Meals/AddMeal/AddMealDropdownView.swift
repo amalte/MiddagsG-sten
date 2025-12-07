@@ -1,6 +1,7 @@
 import SwiftUI
 
-struct MealCardView: View {
+/// Dropdown for which meals have been cooked for this guest or vice versa (according to `MealIdentifier`).
+struct AddMealDropdownView: View {
     let meals: [Meal]
     let identifier: MealIdentifier
     var mealName: String {
@@ -52,7 +53,7 @@ struct MealCardView: View {
 }
 
 #Preview {
-    MealCardView(
+    AddMealDropdownView(
         meals: [
             Meal(name: "Pasta carbonara", guest: "Abraham Svensson", date: Date()),
             Meal(name: "Köttfärsås", guest: "Abraham Svensson", date: Date()),

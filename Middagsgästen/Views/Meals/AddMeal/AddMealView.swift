@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+/// Sheet for creating a new meal, containing input fields for the meal.
 struct AddMealView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -55,9 +56,9 @@ struct AddMealView: View {
                         )
                         .focused($focusedField, equals: .guest)
                         
-                        // "Visa/Dölj" Show the MealCardView.swift view
+                        // "Visa/Dölj" Show the AddMealDropdownView.swift view
                         if focusedField != .guest && !guest.isEmpty && !guestDuplicates.isEmpty {
-                            MealCardView(meals: guestDuplicates, identifier: MealIdentifier.guest)
+                            AddMealDropdownView(meals: guestDuplicates, identifier: MealIdentifier.guest)
                         }
                         Divider().padding(.leading, 16)
                         
@@ -70,7 +71,7 @@ struct AddMealView: View {
                         .focused($focusedField, equals: .mealName)
                         
                         if focusedField != .mealName && !mealName.isEmpty && !mealNameDuplicates.isEmpty {
-                            MealCardView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
+                            AddMealDropdownView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
                         }
                         Divider().padding(.leading, 16)
                         

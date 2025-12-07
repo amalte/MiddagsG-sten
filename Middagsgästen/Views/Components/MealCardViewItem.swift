@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Displays a single meal as a card
+/// Displays a meal as a simple card.
 struct MealCardViewItem: View {
     let meal: Meal
     

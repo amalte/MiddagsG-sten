@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// A text input field with selectable autocomplete for existing meals/guests.
 struct AutoCompleteField: View {
     @Binding var text: String
     let placeholder: String
