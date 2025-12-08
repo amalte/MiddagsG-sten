@@ -11,9 +11,11 @@ struct AddMealView: View {
     @State private var mealName = ""
     @State private var guest = ""
     @State private var date = Date()
+    @State private var diet = ""
+    @State private var notes = ""
     
     @FocusState private var focusedField: Field?
-    enum Field { case guest, mealName, date }
+    enum Field { case guest, mealName, date, diet, notes }
     
     var mealNameDuplicates: [Meal] {
         meals.filter {
@@ -69,6 +71,19 @@ struct AddMealView: View {
                             onSelect: { selected in mealName = selected }
                         )
                         .focused($focusedField, equals: .mealName)
+                        Divider().padding(.leading, 16)
+                        
+                        AutoCompleteField(
+                            text: $diet,
+                            placeholder: "Diet (valfritt)"
+                        )
+                        .focused($focusedField, equals: .diet)
+                        
+                        AutoCompleteField(
+                            text: $notes,
+                            placeholder: "Anteckningar (valfritt)"
+                        )
+                        .focused($focusedField, equals: .notes)
                         
                         if focusedField != .mealName && !mealName.isEmpty && !mealNameDuplicates.isEmpty {
                             AddMealDropdownView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
@@ -96,7 +111,13 @@ struct AddMealView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Spara") {
-                            let newMeal = Meal(name: mealName, guest: guest, date: date)
+                            let newMeal = Meal(
+                                name: mealName,
+                                guest: guest,
+                                date: date,
+                                diet: diet.isEmpty ? nil : diet,
+                                notes: notes.isEmpty ? nil : notes
+                            )
                             modelContext.insert(newMeal) // Adds the new meal to the list
                             dismiss()
                         }

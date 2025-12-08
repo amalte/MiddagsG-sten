@@ -4,10 +4,21 @@ import SwiftUI
 struct AutoCompleteField: View {
     @Binding var text: String
     let placeholder: String
-    let suggestions: [String]
-    let onSelect: (String) -> Void
+    let suggestions: [String]?
+    let onSelect: ((String) -> Void)?
     @FocusState private var isFocused: Bool
     
+    init(
+        text: Binding<String>,
+        placeholder: String,
+        suggestions: [String]? = nil,
+        onSelect: ((String) -> Void)? = nil
+    ) {
+        self._text = text
+        self.placeholder = placeholder
+        self.suggestions = suggestions
+        self.onSelect = onSelect
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -23,7 +34,7 @@ struct AutoCompleteField: View {
                         )
                 )
 
-            if isFocused && !text.isEmpty && !suggestions.isEmpty {
+            if isFocused, !text.isEmpty, let suggestions = suggestions, !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(suggestions, id: \.self) { suggestion in
                         Text(suggestion)
@@ -31,7 +42,7 @@ struct AutoCompleteField: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.white)
                             .onTapGesture {
-                                onSelect(suggestion)
+                                onSelect?(suggestion)
                                 isFocused = false
                             }
                     }
