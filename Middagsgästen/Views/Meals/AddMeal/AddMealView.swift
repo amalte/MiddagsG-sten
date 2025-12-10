@@ -90,14 +90,18 @@ struct AddMealView: View {
                         }
                         Divider().padding(.leading, 16)
                         
-                        DatePicker(
-                            "Datum",
-                            selection: $date,
-                            displayedComponents: .date
-                        )
-                        .id(date)
-                        .onChange(of: date) {
-                            focusedField = .date
+                        
+                        HStack {
+                            Text("Datum")
+                            FullFormatDatePicker(
+                                date: $date,
+                                range: Date.distantPast...Date.distantFuture
+                            )
+                            .frame(height: 40)
+                            .id(date)
+                            .onChange(of: date) {
+                                focusedField = .date
+                            }
                         }
                     }
                     .padding()
