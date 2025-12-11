@@ -10,7 +10,9 @@ enum PreviewData {
         Meal(name: "Chicken nuggets", guest: "Göran", date: Calendar.current.date(byAdding: .day, value: -5, to: .now)!),
         Meal(name: "Köttbullar", guest: "Eriksson", date: Calendar.current.date(byAdding: .day, value: -100, to: .now)!),
         Meal(name: "Hamburgare", guest: "Eriksson", date: .now, diet: "nötter, vegeterian", notes: "Gott, recept: https://www.ica.se/recept/hamburgare-712808/"),
-        Meal(name: "Lax i ugn", guest: "Farmor", date: Calendar.current.date(byAdding: .day, value: -5, to: .now)!)
+        Meal(name: "Lax i ugn", guest: "Farmor", date: Calendar.current.date(byAdding: .day, value: -5, to: .now)!),
+        Meal(name: "Pannkakor med sylt och grädde", guest: "Malte", date: Calendar.current.date(byAdding: .day, value: -1, to: .now)!),
+        Meal(name: "Pannkakor", guest: "Malte", date: .now),
     ]
 }
 
