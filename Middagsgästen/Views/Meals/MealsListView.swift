@@ -25,7 +25,7 @@ struct MealsListView: View {
     var body: some View {
         VStack {
             // No meals exist, show empty meal view
-            if meals.isEmpty {
+            if meals.isEmpty && searchText.isEmpty {
                 BackgroundEmptyMealView()
             }
             // Display no search result, search has no matches
