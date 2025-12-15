@@ -10,7 +10,7 @@ struct MealsListView: View {
     ]) private var meals: [Meal]
     
     @State private var searchText = ""
-    @State private var formMode: MealFormMode?
+    @State private var formMode: FormMode?
     @State private var isShowingDeleteConfirmation = false
     @State private var mealPendingDelete: Meal?
 
@@ -68,14 +68,14 @@ struct MealsListView: View {
     }
     
     private func editButton(for meal: Meal) -> some View {
-        Button("", systemImage: "pencil") {
+        Button("", systemImage: AppSymbol.edit.systemName) {
             formMode = .edit(meal)
         }
         .tint(.blue)
     }
 
     private func deleteButton(for meal: Meal) -> some View {
-        Button("", systemImage: "trash") {
+        Button("", systemImage: AppSymbol.delete.systemName) {
             mealPendingDelete = meal
             isShowingDeleteConfirmation = true
         }

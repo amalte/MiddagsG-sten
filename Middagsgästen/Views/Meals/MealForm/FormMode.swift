@@ -1,7 +1,7 @@
 import Foundation
 
 /// Mode to know if adding or editing a meal.
-enum MealFormMode: Identifiable {
+enum FormMode: Identifiable {
     case add
     case edit(Meal)
     
@@ -12,6 +12,10 @@ enum MealFormMode: Identifiable {
         case .edit(let meal):
             return meal.id.uuidString
         }
+    }
+    
+    var mealId: UUID? {
+        meal?.id
     }
     
     var isEdit: Bool {

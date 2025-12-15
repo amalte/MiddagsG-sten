@@ -8,8 +8,8 @@ struct MealFormView: View {
     
     @Query private var meals: [Meal]
     
-    let mode: MealFormMode
-    @State private var meal: Meal
+    let mode: FormMode
+    @State private var meal: MealDraft
     
     @State private var showValidationErrors = false
     
@@ -27,10 +27,10 @@ struct MealFormView: View {
         focusedField != .guest && !meal.guest.isEmpty && !guestDuplicates.isEmpty
     }
     var mealNameDuplicates: [Meal] { // Extract other meals with the same mealName
-        meals.filter { $0.name.caseInsensitiveEquals(meal.name) && $meal.id != $0.id }
+        meals.filter { $0.name.caseInsensitiveEquals(meal.name) && mode.mealId != $0.id }
     }
     var guestDuplicates: [Meal] { // Extract other meals with the same guest
-        meals.filter { $0.guest.caseInsensitiveEquals(meal.guest) && $meal.id != $0.id}
+        meals.filter { $0.guest.caseInsensitiveEquals(meal.guest) && mode.mealId != $0.id}
     }
     
     var guestSuggestions: [String] {
@@ -40,14 +40,14 @@ struct MealFormView: View {
         meals.map(\.name).suggestions(for: meal.name)
     }
     
-    init(mode: MealFormMode) {
+    init(mode: FormMode) {
         self.mode = mode
         
         switch mode {
         case .add:
-            _meal = State(initialValue: Meal(guest: "", name: "", date: .now))
+            _meal = State(initialValue: MealDraft())
         case .edit(let meal):
-            _meal = State(initialValue: meal)
+            _meal = State(initialValue: MealDraft(from: meal))
         }
     }
     
@@ -101,6 +101,7 @@ struct MealFormView: View {
     private var guestInput: some View {
         validatedAutoCompleteField(
             text: $meal.guest,
+            icon: .guest,
             placeholder: "Gäst",
             suggestions: focusedField == .guest ? guestSuggestions : [],
             isFocused: focusedField == .guest,
@@ -119,6 +120,7 @@ struct MealFormView: View {
     private var mealNameInput: some View {
         validatedAutoCompleteField(
             text: $meal.name,
+            icon: .mealName,
             placeholder: "Maträtt",
             suggestions: focusedField == .mealName ? mealNameSuggestions : [],
             isFocused: focusedField == .mealName,
@@ -141,12 +143,14 @@ struct MealFormView: View {
         VStack(spacing: 16) {
             AutoCompleteField(
                 text: $meal.diet.nonOptional(),
+                icon: .diet,
                 placeholder: "Diet (valfritt)"
             )
             .focused($focusedField, equals: .diet)
             
             AutoCompleteField(
                 text: $meal.notes.nonOptional(),
+                icon: .notes,
                 placeholder: "Anteckningar (valfritt)"
             )
             .focused($focusedField, equals: .notes)
@@ -158,6 +162,7 @@ struct MealFormView: View {
     private var datePickerSection: some View {
         VStack {
             HStack {
+                Image(systemName: AppSymbol.date.systemName)
                 Text("Datum")
                 FullFormatDatePicker(
                     date: $meal.date,
@@ -175,46 +180,34 @@ struct MealFormView: View {
         .padding(.top, 20)
     }
     
-    /// Save a newly created meal
+    /// Save the meal
     private func save() {
-        // Validate form
-        guard isFormValid else {
-            showValidationErrors = true
-            // Auto focus the invalid field
-            if !isGuestValid {
-                focusedField = .guest
-            } else if !isMealNameValid {
-                focusedField = .mealName
-            }
-            return
-        }
+        guard validateForm() else { return }
         
         switch mode {
         case .add:
-            let newMeal = Meal(guest: meal.guest, name: meal.name, date: meal.date,
-                               diet: meal.diet,
-                               notes: meal.notes
-            )
-            modelContext.insert(newMeal) // Adds the new meal to the list
-            
+            modelContext.insert(meal.toMeal()) // Adds the new meal to the list
         case .edit(let originalMeal):
-            updateMeal(to: originalMeal) // Update the existing meal
+            originalMeal.apply(meal) // Update the existing meal
         }
         dismiss()
     }
-
-    private func updateMeal(to meal: Meal) {
-        meal.guest = self.meal.guest
-        meal.name = self.meal.name
-        meal.date = self.meal.date
-        meal.diet = self.meal.diet
-        meal.notes = self.meal.notes
+    
+    private func validateForm() -> Bool {
+        guard isFormValid else {
+            showValidationErrors = true
+            // Auto focus the invalid field
+            focusedField = !isGuestValid ? .guest : .mealName
+            return false
+        }
+        return true
     }
     
     // A textinput containing validation with error text showing if input is invalid,
     // textinput also shows autocomplete suggestions based on the inputted suggestions list.
     private func validatedAutoCompleteField(
         text: Binding<String>,
+        icon: AppSymbol,
         placeholder: String,
         suggestions: [String],
         isFocused: Bool,
@@ -225,6 +218,7 @@ struct MealFormView: View {
         VStack(spacing: 0) {
             AutoCompleteField(
                 text: text,
+                icon: icon,
                 placeholder: placeholder,
                 suggestions: isFocused ? suggestions : [],
                 onSelect: { text.wrappedValue = $0 }
