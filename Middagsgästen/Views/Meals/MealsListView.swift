@@ -10,7 +10,7 @@ struct MealsListView: View {
     ]) private var meals: [Meal]
     
     @State private var searchText = ""
-    @State private var isAddMealSheetPresented = false
+    @State private var formMode: MealFormMode?
     @State private var isShowingDeleteConfirmation = false
     @State private var mealPendingDelete: Meal?
 
@@ -38,8 +38,8 @@ struct MealsListView: View {
         .navigationTitle("Middagsgästen")
         .searchable(text: $searchText, prompt: "Sök efter maträtt eller gäster")
         .toolbar { addButton }
-        .sheet(isPresented: $isAddMealSheetPresented) {
-            AddMealView()
+        .sheet(item: $formMode) { mode in
+            MealFormView(mode: mode)
         }
         .alert("Ta bort maträtt?", isPresented: $isShowingDeleteConfirmation) {
             deleteAlertButtons
@@ -58,12 +58,20 @@ struct MealsListView: View {
         List {
             ForEach(filteredMeals) { meal in
                 MealCardViewItem(meal: meal)
-                    .swipeActions {
-                        deleteButton(for: meal)
-                    }
+                .swipeActions {
+                    deleteButton(for: meal)
+                    editButton(for: meal)
+                }
             }
         }
         .animation(.default, value: filteredMeals)
+    }
+    
+    private func editButton(for meal: Meal) -> some View {
+        Button("", systemImage: "pencil") {
+            formMode = .edit(meal)
+        }
+        .tint(.blue)
     }
 
     private func deleteButton(for meal: Meal) -> some View {
@@ -77,7 +85,7 @@ struct MealsListView: View {
     private var addButton: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button {
-                isAddMealSheetPresented = true
+                formMode = .add
             } label: {
                 Image(systemName: "plus")
             }

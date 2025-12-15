@@ -5,8 +5,8 @@ import SwiftData
 @Model
 class Meal {
     var id = UUID()
-    var name: String // name of the meal
     var guest: String // guest the meal was made for
+    var name: String // name of the meal
     var date: Date // date the meal was cooked
     var diet: String? // any allergies or if the guest is vegan for example
     var notes: String? // optional notes for the meal
@@ -15,9 +15,9 @@ class Meal {
         date.formatted(date: .abbreviated, time: .omitted)
     }
     
-    init(name: String, guest: String, date: Date, diet: String? = nil, notes: String? = nil) {
-        self.name = name
+    init(guest: String, name: String, date: Date, diet: String? = nil, notes: String? = nil) {
         self.guest = guest
+        self.name = name
         self.date = date
         self.diet = diet
         self.notes = notes

@@ -7,25 +7,18 @@ struct MealCardViewItem: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "fork.knife")
-                    .padding(.top, 1)
-                Text(meal.name)
-                    .font(.headline)
-            }
-
-            HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "person.fill")
                     .padding(.top, 1)
                 Text(meal.guest)
             }
-            .foregroundColor(.secondary)
-
+            .font(.headline)
+            
             HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "calendar")
+                Image(systemName: "fork.knife")
                     .padding(.top, 1)
-                Text(meal.formattedDate)
+                Text(meal.name)
+                    .foregroundColor(.secondary)
             }
-            .foregroundColor(.secondary)
             
             if let diet = meal.diet {
                 HStack(alignment: .top, spacing: 6) {
@@ -44,6 +37,13 @@ struct MealCardViewItem: View {
                 }
                 .foregroundColor(.secondary)
             }
+
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "calendar")
+                    .padding(.top, 1)
+                Text(meal.formattedDate)
+            }
+            .foregroundColor(.secondary)
         }
         .padding()
         .background(Color(.systemBackground))
@@ -53,6 +53,6 @@ struct MealCardViewItem: View {
 
 #Preview {
     MealCardViewItem(
-        meal: Meal(name: "Pasta carbonara", guest: "Abraham Svensson", date: Date(), diet: "potatis, vegan", notes: "God mat som smakar gott mycket gott mycket mycket mycket mycket gott gott gott gott.")
+        meal: Meal(guest: "Abraham Svensson", name: "Pasta carbonara", date: Date(), diet: "potatis, vegan", notes: "God mat som smakar gott mycket gott mycket mycket mycket mycket gott gott gott gott.")
     )
 }

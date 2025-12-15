@@ -1,52 +1,60 @@
 import SwiftData
 import SwiftUI
 
-/// Sheet for creating a new meal, containing input fields for the meal.
-struct AddMealView: View {
+/// Sheet for creating and editing a  meal, containing input fields for the meal.
+struct MealFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
     @Query private var meals: [Meal]
     
-    @State private var mealName = ""
-    @State private var guest = ""
-    @State private var diet = ""
-    @State private var notes = ""
-    @State private var date = Date()
+    let mode: MealFormMode
+    @State private var meal: Meal
     
     @State private var showValidationErrors = false
     
     @FocusState private var focusedField: Field?
     enum Field { case guest, mealName, diet, notes, date }
     
-    var isGuestValid: Bool { !guest.isBlank }
-    var isMealNameValid: Bool { !mealName.isBlank  }
+    var isGuestValid: Bool { !meal.guest.isBlank }
+    var isMealNameValid: Bool { !meal.name.isBlank  }
     var isFormValid: Bool { isGuestValid && isMealNameValid }
     
     var shouldShowMealNameDuplicates: Bool {
-        focusedField != .mealName && !mealName.isEmpty && !mealNameDuplicates.isEmpty
+        focusedField != .mealName && !meal.name.isEmpty && !mealNameDuplicates.isEmpty
     }
     var shouldShowGuestDuplicates: Bool {
-        focusedField != .guest && !guest.isEmpty && !guestDuplicates.isEmpty
+        focusedField != .guest && !meal.guest.isEmpty && !guestDuplicates.isEmpty
     }
     var mealNameDuplicates: [Meal] { // Extract other meals with the same mealName
-        meals.filter { $0.name.caseInsensitiveEquals(mealName) }
+        meals.filter { $0.name.caseInsensitiveEquals(meal.name) && $meal.id != $0.id }
     }
     var guestDuplicates: [Meal] { // Extract other meals with the same guest
-        meals.filter { $0.guest.caseInsensitiveEquals(guest) }
+        meals.filter { $0.guest.caseInsensitiveEquals(meal.guest) && $meal.id != $0.id}
     }
     
     var guestSuggestions: [String] {
-        meals.map(\.guest).suggestions(for: guest)
+        meals.map(\.guest).suggestions(for: meal.guest)
     }
     var mealNameSuggestions: [String] {
-        meals.map(\.name).suggestions(for: mealName)
+        meals.map(\.name).suggestions(for: meal.name)
+    }
+    
+    init(mode: MealFormMode) {
+        self.mode = mode
+        
+        switch mode {
+        case .add:
+            _meal = State(initialValue: Meal(guest: "", name: "", date: .now))
+        case .edit(let meal):
+            _meal = State(initialValue: meal)
+        }
     }
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                Text("Ny maträtt")
+                Text(mode.title)
                     .font(.title.weight(.semibold))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -56,21 +64,8 @@ struct AddMealView: View {
                         .padding(.top, 8)
                         .padding(.bottom, 4)
                     
-                    VStack(spacing: 0) {
-                        guestInput
-                        Divider()
-                            .padding(.leading, 16)
-                            .padding(.top, showValidationErrors && !isGuestValid ? 8 : 16)
-                            .padding(.bottom, 16)
-                        mealNameInput
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
-                    .padding(.bottom, showValidationErrors && !isMealNameValid ? 8 : 16)
-                    .roundEdgesCard()
-                    
+                    mealInputs
                     otherSection
-                    
                     datePickerSection
                 }
             }
@@ -87,10 +82,25 @@ struct AddMealView: View {
         }
     }
     
+    private var mealInputs: some View {
+        VStack(spacing: 0) {
+            guestInput
+            Divider()
+                .padding(.leading, 16)
+                .padding(.top, showValidationErrors && !isGuestValid ? 8 : 16)
+                .padding(.bottom, 16)
+            mealNameInput
+        }
+        .padding(.horizontal)
+        .padding(.top, 16)
+        .padding(.bottom, showValidationErrors && !isMealNameValid ? 8 : 16)
+        .roundEdgesCard()
+    }
+    
     // Input field for the "guest" textinput
     private var guestInput: some View {
         validatedAutoCompleteField(
-            text: $guest,
+            text: $meal.guest,
             placeholder: "Gäst",
             suggestions: focusedField == .guest ? guestSuggestions : [],
             isFocused: focusedField == .guest,
@@ -98,7 +108,7 @@ struct AddMealView: View {
             errorText: "Gäst är obligatoriskt",
             suggestionsDropdownView: {
                 if shouldShowGuestDuplicates {
-                    AddMealDropdownView(meals: guestDuplicates, identifier: MealIdentifier.guest)
+                    MealDropdownView(meals: guestDuplicates, identifier: .guest)
                 }
             }
         )
@@ -108,7 +118,7 @@ struct AddMealView: View {
     // Input field for the "mealName" textinput
     private var mealNameInput: some View {
         validatedAutoCompleteField(
-            text: $mealName,
+            text: $meal.name,
             placeholder: "Maträtt",
             suggestions: focusedField == .mealName ? mealNameSuggestions : [],
             isFocused: focusedField == .mealName,
@@ -116,7 +126,7 @@ struct AddMealView: View {
             errorText: "Maträtt är obligatoriskt",
             suggestionsDropdownView: {
                 if shouldShowMealNameDuplicates {
-                    AddMealDropdownView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
+                    MealDropdownView(meals: mealNameDuplicates, identifier: .mealName)
                 }
             }
         )
@@ -129,10 +139,16 @@ struct AddMealView: View {
             .padding(.top, 20)
             .padding(.bottom, 4)
         VStack(spacing: 16) {
-            AutoCompleteField(text: $diet, placeholder: "Diet (valfritt)")
+            AutoCompleteField(
+                text: $meal.diet.nonOptional(),
+                placeholder: "Diet (valfritt)"
+            )
             .focused($focusedField, equals: .diet)
             
-            AutoCompleteField(text: $notes, placeholder: "Anteckningar (valfritt)")
+            AutoCompleteField(
+                text: $meal.notes.nonOptional(),
+                placeholder: "Anteckningar (valfritt)"
+            )
             .focused($focusedField, equals: .notes)
         }
         .padding()
@@ -144,12 +160,12 @@ struct AddMealView: View {
             HStack {
                 Text("Datum")
                 FullFormatDatePicker(
-                    date: $date,
+                    date: $meal.date,
                     range: Date.distantPast...Date.distantFuture
                 )
                 .frame(height: 60)
-                .id(date)
-                .onChange(of: date) {
+                .id(meal.date)
+                .onChange(of: meal.date) {
                     focusedField = .date
                 }
             }
@@ -173,12 +189,26 @@ struct AddMealView: View {
             return
         }
         
-        let newMeal = Meal(name: mealName, guest: guest, date: date,
-            diet: diet.isEmpty ? nil : diet,
-            notes: notes.isEmpty ? nil : notes
-        )
-        modelContext.insert(newMeal) // Adds the new meal to the list
+        switch mode {
+        case .add:
+            let newMeal = Meal(guest: meal.guest, name: meal.name, date: meal.date,
+                               diet: meal.diet,
+                               notes: meal.notes
+            )
+            modelContext.insert(newMeal) // Adds the new meal to the list
+            
+        case .edit(let originalMeal):
+            updateMeal(to: originalMeal) // Update the existing meal
+        }
         dismiss()
+    }
+
+    private func updateMeal(to meal: Meal) {
+        meal.guest = self.meal.guest
+        meal.name = self.meal.name
+        meal.date = self.meal.date
+        meal.diet = self.meal.diet
+        meal.notes = self.meal.notes
     }
     
     // A textinput containing validation with error text showing if input is invalid,
@@ -243,6 +273,6 @@ extension View {
 }
 
 #Preview {
-    AddMealView()
+    MealFormView(mode: .add)
         .modelContainer(previewContainer)
 }

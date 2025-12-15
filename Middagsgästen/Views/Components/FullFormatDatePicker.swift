@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Date picker that always displays full date format (Dec 10, 2025), original DatePicker contains bug making it show short format sometimes.
+/// Date picker that always displays full date format (Dec 10, 2025), original DatePicker contains bug making it sometimes show short format.
 struct FullFormatDatePicker: UIViewRepresentable {
     @Binding var date: Date
     var range: ClosedRange<Date>
