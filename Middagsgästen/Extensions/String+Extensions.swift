@@ -1,6 +1,10 @@
 import Foundation
 
 extension String {
+    var isBlank: Bool {
+        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
     func caseInsensitiveEquals(_ other: String) -> Bool {
         self.localizedCaseInsensitiveCompare(other) == .orderedSame
     }

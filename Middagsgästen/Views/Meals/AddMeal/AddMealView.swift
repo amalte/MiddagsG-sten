@@ -19,28 +19,28 @@ struct AddMealView: View {
     @FocusState private var focusedField: Field?
     enum Field { case guest, mealName, diet, notes, date }
     
-    var isGuestValid: Bool { !guest.trimmingCharacters(in: .whitespaces).isEmpty }
-    var isMealNameValid: Bool { !mealName.trimmingCharacters(in: .whitespaces).isEmpty }
+    var isGuestValid: Bool { !guest.isBlank }
+    var isMealNameValid: Bool { !mealName.isBlank  }
     var isFormValid: Bool { isGuestValid && isMealNameValid }
     
+    var shouldShowMealNameDuplicates: Bool {
+        focusedField != .mealName && !mealName.isEmpty && !mealNameDuplicates.isEmpty
+    }
+    var shouldShowGuestDuplicates: Bool {
+        focusedField != .guest && !guest.isEmpty && !guestDuplicates.isEmpty
+    }
     var mealNameDuplicates: [Meal] { // Extract other meals with the same mealName
-        meals.filter {
-            $0.name.localizedCaseInsensitiveCompare(self.mealName) == .orderedSame
-        }
+        meals.filter { $0.name.caseInsensitiveEquals(mealName) }
     }
     var guestDuplicates: [Meal] { // Extract other meals with the same guest
-        meals.filter {
-            $0.guest.localizedCaseInsensitiveCompare(self.guest) == .orderedSame
-        }
+        meals.filter { $0.guest.caseInsensitiveEquals(guest) }
     }
     
     var guestSuggestions: [String] {
-        let allGuests = meals.map { $0.guest }
-        return allGuests.suggestions(for: guest)
+        meals.map(\.guest).suggestions(for: guest)
     }
     var mealNameSuggestions: [String] {
-        let allNames = meals.map { $0.name }
-        return allNames.suggestions(for: mealName)
+        meals.map(\.name).suggestions(for: mealName)
     }
     
     var body: some View {
@@ -52,93 +52,26 @@ struct AddMealView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 VStack {
-                    
                     sectionTitle("Måltid")
                         .padding(.top, 8)
                         .padding(.bottom, 4)
                     
                     VStack(spacing: 0) {
-                        
-                        // Input field for the "guest" textinput
-                        validatedAutoCompleteTextInput(
-                            text: $guest,
-                            placeholder: "Gäst",
-                            suggestions: focusedField == .guest ? guestSuggestions : [],
-                            isFocused: focusedField == .guest,
-                            isValid: isGuestValid,
-                            errorText: "Gäst är obligatoriskt",
-                            suggestionsDropdownView: {
-                                if focusedField != .guest && !guest.isEmpty && !guestDuplicates.isEmpty {
-                                    AddMealDropdownView(meals: guestDuplicates, identifier: MealIdentifier.guest)
-                                }
-                            }
-                        )
-                        .focused($focusedField, equals: .guest)
-                        
+                        guestInput
                         Divider()
                             .padding(.leading, 16)
                             .padding(.top, showValidationErrors && !isGuestValid ? 8 : 16)
                             .padding(.bottom, 16)
-                        
-                        // Input field for the "mealName" textinput
-                        validatedAutoCompleteTextInput(
-                            text: $mealName,
-                            placeholder: "Maträtt",
-                            suggestions: focusedField == .mealName ? mealNameSuggestions : [],
-                            isFocused: focusedField == .mealName,
-                            isValid: isMealNameValid,
-                            errorText: "Maträtt är obligatoriskt",
-                            suggestionsDropdownView: {
-                                if focusedField != .mealName && !mealName.isEmpty && !mealNameDuplicates.isEmpty {
-                                    AddMealDropdownView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
-                                }
-                            }
-                        )
-                        .focused($focusedField, equals: .mealName)
-                        
+                        mealNameInput
                     }
                     .padding(.horizontal)
                     .padding(.top, 16)
                     .padding(.bottom, showValidationErrors && !isMealNameValid ? 8 : 16)
                     .roundEdgesCard()
                     
-                    sectionTitle("Övrigt")
-                        .padding(.top, 20)
-                        .padding(.bottom, 4)
-                    VStack(spacing: 16) {
-                        AutoCompleteField(
-                            text: $diet,
-                            placeholder: "Diet (valfritt)"
-                        )
-                        .focused($focusedField, equals: .diet)
-                        
-                        AutoCompleteField(
-                            text: $notes,
-                            placeholder: "Anteckningar (valfritt)"
-                        )
-                        .focused($focusedField, equals: .notes)
-                    }
-                    .padding()
-                    .roundEdgesCard()
+                    otherSection
                     
-                    
-                    VStack {
-                        HStack {
-                            Text("Datum")
-                            FullFormatDatePicker(
-                                date: $date,
-                                range: Date.distantPast...Date.distantFuture
-                            )
-                            .frame(height: 60)
-                            .id(date)
-                            .onChange(of: date) {
-                                focusedField = .date
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .roundEdgesCard()
-                    .padding(.top, 20)
+                    datePickerSection
                 }
             }
             .toolbar {
@@ -152,6 +85,78 @@ struct AddMealView: View {
             .onTapGesture { focusedField = nil } // dismiss focus when tapping outside
             .background(Color(.systemGroupedBackground))
         }
+    }
+    
+    // Input field for the "guest" textinput
+    private var guestInput: some View {
+        validatedAutoCompleteField(
+            text: $guest,
+            placeholder: "Gäst",
+            suggestions: focusedField == .guest ? guestSuggestions : [],
+            isFocused: focusedField == .guest,
+            isValid: isGuestValid,
+            errorText: "Gäst är obligatoriskt",
+            suggestionsDropdownView: {
+                if shouldShowGuestDuplicates {
+                    AddMealDropdownView(meals: guestDuplicates, identifier: MealIdentifier.guest)
+                }
+            }
+        )
+        .focused($focusedField, equals: .guest)
+    }
+    
+    // Input field for the "mealName" textinput
+    private var mealNameInput: some View {
+        validatedAutoCompleteField(
+            text: $mealName,
+            placeholder: "Maträtt",
+            suggestions: focusedField == .mealName ? mealNameSuggestions : [],
+            isFocused: focusedField == .mealName,
+            isValid: isMealNameValid,
+            errorText: "Maträtt är obligatoriskt",
+            suggestionsDropdownView: {
+                if shouldShowMealNameDuplicates {
+                    AddMealDropdownView(meals: mealNameDuplicates, identifier: MealIdentifier.mealName)
+                }
+            }
+        )
+        .focused($focusedField, equals: .mealName)
+    }
+    
+    @ViewBuilder
+    private var otherSection: some View {
+        sectionTitle("Övrigt")
+            .padding(.top, 20)
+            .padding(.bottom, 4)
+        VStack(spacing: 16) {
+            AutoCompleteField(text: $diet, placeholder: "Diet (valfritt)")
+            .focused($focusedField, equals: .diet)
+            
+            AutoCompleteField(text: $notes, placeholder: "Anteckningar (valfritt)")
+            .focused($focusedField, equals: .notes)
+        }
+        .padding()
+        .roundEdgesCard()
+    }
+    
+    private var datePickerSection: some View {
+        VStack {
+            HStack {
+                Text("Datum")
+                FullFormatDatePicker(
+                    date: $date,
+                    range: Date.distantPast...Date.distantFuture
+                )
+                .frame(height: 60)
+                .id(date)
+                .onChange(of: date) {
+                    focusedField = .date
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .roundEdgesCard()
+        .padding(.top, 20)
     }
     
     /// Save a newly created meal
@@ -168,10 +173,7 @@ struct AddMealView: View {
             return
         }
         
-        let newMeal = Meal(
-            name: mealName,
-            guest: guest,
-            date: date,
+        let newMeal = Meal(name: mealName, guest: guest, date: date,
             diet: diet.isEmpty ? nil : diet,
             notes: notes.isEmpty ? nil : notes
         )
@@ -181,8 +183,7 @@ struct AddMealView: View {
     
     // A textinput containing validation with error text showing if input is invalid,
     // textinput also shows autocomplete suggestions based on the inputted suggestions list.
-    @ViewBuilder
-    func validatedAutoCompleteTextInput(
+    private func validatedAutoCompleteField(
         text: Binding<String>,
         placeholder: String,
         suggestions: [String],
@@ -191,7 +192,6 @@ struct AddMealView: View {
         errorText: String,
         @ViewBuilder suggestionsDropdownView: () -> some View
     ) -> some View {
-        
         VStack(spacing: 0) {
             AutoCompleteField(
                 text: text,
@@ -213,7 +213,7 @@ struct AddMealView: View {
         }
     }
     
-    func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: String) -> some View {
           Text(text)
             .font(.subheadline)
             .foregroundStyle(.secondary)
@@ -222,7 +222,7 @@ struct AddMealView: View {
             .padding(.horizontal, 32)
       }
     
-    func validationErrorText(_ text: String) -> some View {
+    private func validationErrorText(_ text: String) -> some View {
         Text(text)
             .font(.caption)
             .foregroundColor(.red)
