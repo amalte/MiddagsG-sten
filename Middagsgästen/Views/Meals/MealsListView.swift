@@ -25,13 +25,20 @@ struct MealsListView: View {
     var body: some View {
         VStack {
             Group {
-                if filteredMeals.isEmpty && !searchText.isEmpty {
+                // No meals exist, show empty meal view
+                if meals.isEmpty {
+                    BackgroundEmptyMealView()
+                }
+                // Display no search result, search has no matches
+                else if filteredMeals.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView(
                         "Din sökning matchade inte med någon maträtt eller gäst",
                         systemImage: "magnifyingglass",
-                        description: Text("Testa ett annat namn på maträtt eller gästnamn")
+                        description: Text("Testa ett annat namn på maträtt eller gäst")
                     )
-                } else {
+                }
+                // Display meals, filtered if search is used otherwise all
+                else {
                     List {
                         ForEach(filteredMeals) { meal in
                             MealCardViewItem(meal: meal)
